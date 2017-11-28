@@ -1,7 +1,6 @@
 package senders
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -20,7 +19,7 @@ type SlackSender struct {
 // Run implements Sender interface
 func (s *SlackSender) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Message, error) {
 	if s.HookURL == "" {
-		return nil, errors.New("webhook URL could not be null")
+		fmt.Println("WARN: no webhook URL provided. no alert will be generated!")
 	}
 	out := make(chan srfsoftlayer.Message)
 	go s.run(in, out)
@@ -29,22 +28,25 @@ func (s *SlackSender) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Messa
 
 func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 	for mess := range in {
-		for _, account := range s.Channels {
-			if mess.Type == "ticket" {
-				accountID := *mess.Content.(datatypes.Ticket).AccountId
+		if mess.Type == "ticket" {
+			accountID := *mess.Content.(datatypes.Ticket).AccountId
+			for _, account := range s.Channels {
 				if accountID == account {
 					ticket := mess.Content.(datatypes.Ticket)
-					s.send(message{
-						Title:     *ticket.Title,
-						Timestamp: ticket.CreateDate.Unix(),
-						AccountID: accountID,
-						IssuedBy:  *ticket.FirstUpdate.EditorType,
-					})
-					srfsoftlayer.Inspect("ticket", mess)
+					if *ticket.FirstUpdate.EditorType != "USER" {
+						s.send(message{
+							Title:     *ticket.Title,
+							TicketID:  *ticket.Id,
+							Timestamp: ticket.CreateDate.Unix(),
+							AccountID: accountID,
+							IssuedBy:  *ticket.FirstUpdate.EditorType,
+						})
+						srfsoftlayer.Inspect("ticket", mess)
+					}
 				}
-			} else {
-				srfsoftlayer.Inspect("message", mess)
 			}
+		} else {
+			srfsoftlayer.Inspect("message", mess)
 		}
 		out <- mess
 	}
@@ -52,6 +54,7 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 
 type message struct {
 	Title     string
+	TicketID  int
 	Timestamp int64
 	Account   string
 	AccountID int
@@ -63,20 +66,15 @@ func (s *SlackSender) send(mess message) {
 	hook := slack.NewWebHook(s.HookURL)
 	err := hook.PostMessage(&slack.WebHookPostPayload{
 		Channel:   fmt.Sprintf("#ant%v", mess.AccountID),
-		Username:  "HardenedLayer Alargo",
+		Username:  "Hyeoncheon Silrok",
 		IconEmoji: ":hc:",
 		Attachments: []*slack.Attachment{
 			{
-				Pretext:   "*Attention!* _Automated Ticket Issued!_",
-				Fallback:  "Attention! Automated Ticket Issued!",
+				Pretext:   "_New Ticket Issued!_",
 				Color:     "warning",
-				Title:     "Click to see Alargo Alert Details",
-				TitleLink: "http://alargo.as-a-svc.com",
+				Title:     mess.Title,
+				TitleLink: "http://alargo.as-a-svc.com/tickets/" + strconv.Itoa(mess.TicketID),
 				Fields: []*slack.AttachmentField{
-					{
-						Title: "Title",
-						Value: mess.Title,
-					},
 					{
 						Title: "Account",
 						Value: strconv.Itoa(mess.AccountID),
@@ -88,7 +86,7 @@ func (s *SlackSender) send(mess message) {
 						Short: true,
 					},
 				},
-				Footer:     "Alargo",
+				Footer:     "Hyeoncheon",
 				FooterIcon: "http://hyeoncheon.github.io/images/hyeoncheon-icon.png",
 				TimeStamp:  mess.Timestamp,
 				MarkdownIn: []string{"text", "pretext", "fields"},

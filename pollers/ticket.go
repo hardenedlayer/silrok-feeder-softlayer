@@ -40,7 +40,7 @@ func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Mes
 	loc, _ := time.LoadLocation("US/Central")
 	dateNow := time.Now().AddDate(0, 0, 0).In(loc)
 	if p.FetchAll {
-		dateNow = time.Now().AddDate(-2, 0, 0).In(loc)
+		dateNow = time.Now().AddDate(-2, -1, 0).In(loc)
 	}
 	dateStartStr := dateNow.Format("01/02/2006 15:04:05")
 	retry := false
@@ -52,15 +52,23 @@ func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Mes
 
 			}
 		default:
-			if p.FetchAll && !retry { // for fetching all mode, add 5 days per iteration.
-				dateNow = dateNow.AddDate(0, 0, 5)
+			if p.FetchAll {
+				if !retry { // for fetching all mode, add 5 days per iteration.
+					dateNow = dateNow.AddDate(0, 0, 5)
+				} else {
+					dateNow = dateNow.AddDate(0, 0, -2)
+				}
+				if dateNow.After(time.Now().In(loc)) {
+					dateNow = time.Now().In(loc)
+					p.FetchAll = false
+				}
 			} else {
 				dateNow = time.Now().In(loc)
 			}
 			dateEndStr := dateNow.Format("01/02/2006 15:04:05")
 			//! for DateBetween, entiries exactly matched with start and end date also included
 			data, err := service.
-				Mask("id;accountId;assignedUserId;groupId;createDate;lastEditDate;lastEditType;lastResponseDate;locationId;modifyDate;priority;responsibleBrandId;statusId;subjectId;title;firstUpdate.editorType;firstUpdate.editorId;status").
+				Mask("attachedVirtualGuests.id;attachedVirtualGuests.hostname;attachedVirtualGuests.domain;attachedVirtualGuests.typeId;attachedVirtualGuests.location.pathString;attachedVirtualGuests.tagReferences;id;accountId;assignedUserId;groupId;createDate;lastEditDate;lastEditType;lastResponseDate;locationId;modifyDate;priority;responsibleBrandId;statusId;subjectId;title;firstUpdate.editorType;firstUpdate.editorId;status").
 				Filter(filter.Build(
 					filter.Path("tickets.createDate").DateBetween(dateStartStr, dateEndStr),
 				)).
