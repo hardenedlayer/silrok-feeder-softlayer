@@ -7,7 +7,7 @@ import (
 
 // Inspect print out given data to standard output.
 func Inspect(desc string, data interface{}) {
-	fmt.Printf("{ \"datatype\": \"%T\",\n\"data\": %v }\n\n", data, ToJSON(data))
+	fmt.Printf("{\n	\"desc\": \"%v\",\n\"datatype\": \"%T\",\n\"data\": %v }\n\n", desc, data, ToJSON(data))
 }
 
 // ToJSON returns json marshalled string of given data.
