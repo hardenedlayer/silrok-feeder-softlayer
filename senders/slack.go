@@ -12,6 +12,12 @@ import (
 	"github.com/hardenedlayer/silrok-feeder-softlayer"
 )
 
+const (
+	messageRestarted = `@channel *attention please!* silrok feeder for softlayer just (re)started. If this is not planned by you or announced by provider, possibly there was an issue on alerting system. You need to check your services manually.
+
+_May the force be with you..._`
+)
+
 // SlackSender is...
 type SlackSender struct {
 	HookURL      string
@@ -37,6 +43,12 @@ func (s *SlackSender) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Messa
 
 	out := make(chan srfsoftlayer.Message)
 	go s.run(in, out)
+	s.send(message{
+		Channel: "#general",
+		Level:   "danger",
+		Title:   "Red two standing by...",
+		Content: messageRestarted,
+	})
 	return out, nil
 }
 
@@ -74,7 +86,9 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 					content += "Hostname: " + *ticket.AttachedHardware[0].Hostname
 				}
 
-				s.send(message{
+				err := s.send(message{
+					Channel:   fmt.Sprintf("#ant%v", accountID),
+					Level:     "warning",
 					Title:     *ticket.Title,
 					TicketID:  *ticket.Id,
 					Timestamp: ticket.CreateDate.Unix(),
@@ -82,8 +96,11 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 					IssuedBy:  *ticket.FirstUpdate.EditorType,
 					Content:   content,
 				})
-				// remove later
-				srfsoftlayer.Inspect("ticket", mess)
+				if err != nil {
+					fmt.Printf("could not send message for ticket #%v", *ticket.Id)
+				} else {
+					fmt.Printf("slack message for ticket #%v was sent successfully.", *ticket.Id)
+				}
 			}
 		} else {
 			srfsoftlayer.Inspect("message", mess)
@@ -93,25 +110,35 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 }
 
 type message struct {
+	Channel   string
+	Level     string
 	Title     string
-	TicketID  int
 	Timestamp int64
+
+	TicketID  int
 	Account   string
 	AccountID int
 	IssuedBy  string
 	Content   string
 }
 
-func (s *SlackSender) send(mess message) {
+func (s *SlackSender) send(mess message) error {
 	hook := slack.NewWebHook(s.HookURL)
-	err := hook.PostMessage(&slack.WebHookPostPayload{
-		Channel:   fmt.Sprintf("#ant%v", mess.AccountID),
+	payload := slack.WebHookPostPayload{
+		Channel:   mess.Channel,
 		Username:  "Hyeoncheon Silrok",
 		IconEmoji: ":hc:",
-		Attachments: []*slack.Attachment{
+	}
+
+	if mess.Timestamp == 0 {
+		mess.Timestamp = time.Now().Unix()
+	}
+
+	if mess.TicketID != 0 {
+		payload.Attachments = []*slack.Attachment{
 			{
 				Pretext:   "_New Ticket Issued!_",
-				Color:     "warning",
+				Color:     mess.Level,
 				Title:     mess.Title,
 				TitleLink: "http://alargo.as-a-svc.com/tickets/" + strconv.Itoa(mess.TicketID),
 				Fields: []*slack.AttachmentField{
@@ -135,9 +162,30 @@ func (s *SlackSender) send(mess message) {
 				TimeStamp:  mess.Timestamp,
 				MarkdownIn: []string{"text", "pretext", "fields"},
 			},
-		},
-	})
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		}
+	} else {
+		payload.Attachments = []*slack.Attachment{
+			{
+				Color:     mess.Level,
+				Title:     mess.Title,
+				TitleLink: "http://alargo.as-a-svc.com/",
+				Fields: []*slack.AttachmentField{
+					{
+						Value: mess.Content,
+						Short: false,
+					},
+				},
+				Footer:     "Hyeoncheon",
+				FooterIcon: "http://hyeoncheon.github.io/images/hyeoncheon-icon.png",
+				TimeStamp:  mess.Timestamp,
+				MarkdownIn: []string{"text", "pretext", "fields"},
+			},
+		}
 	}
+
+	if err := hook.PostMessage(&payload); err != nil {
+		fmt.Printf("error: %v\n", err)
+		return err
+	}
+	return nil
 }
