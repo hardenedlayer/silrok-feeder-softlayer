@@ -43,7 +43,7 @@ func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Mes
 	// initial start date for between filter: 10s before starting.
 	dateNow := time.Now().Add(-10 * time.Second)
 	if p.FetchAll {
-		dateNow = time.Now().AddDate(-3, 0, 0)
+		dateNow = time.Now().AddDate(-4, 0, 0)
 	}
 	dateLast := dateNow
 	dateStartStr := dateNow.In(loc).Format("01/02/2006 15:04:05")
@@ -102,11 +102,10 @@ func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Mes
 						Title:   *ticket.Title,
 						Content: ticket,
 					}
-					fmt.Printf("- ticket #%v create: %v (last: %v", *ticket.Id, ticket.CreateDate.Time, dateLast)
+					fmt.Printf("- ticket #%v create: %v\n", *ticket.Id, ticket.CreateDate.Time)
 					if ticket.CreateDate.Time.After(dateLast) {
 						dateLast = ticket.CreateDate.Time
 					}
-					fmt.Printf(" -> %v\n", dateLast)
 				}
 			}
 			time.Sleep(5 * time.Second)
