@@ -12,7 +12,7 @@ func run(opts *Options) error {
 	in := make(chan srfsoftlayer.Message)
 
 	var ticketPoller srfsoftlayer.Poller
-	ticketPoller = &pollers.TicketPoller{User: opts.SLUser, APIKey: opts.SLAPIKey, FetchAll: opts.FetchAll}
+	ticketPoller = &pollers.TicketPoller{User: opts.SLUser, APIKey: opts.SLAPIKey, FetchAll: opts.FetchAll, From: opts.From}
 	mid, err := ticketPoller.Run(in)
 	if err != nil {
 		fmt.Printf("could not start ticket poller: %v\n", err)

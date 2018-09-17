@@ -13,6 +13,7 @@ type Options struct {
 	SLUser          string
 	SLAPIKey        string
 	FetchAll        bool
+	From            string
 	ArchiveAddress  string
 	SlackWebhookURL string
 	Clients         []int
@@ -34,6 +35,7 @@ func getOptions() *Options {
 	getopt.FlagLong(&opts.SLUser, "user", 'u', "API Username of SoftLayer Brand Account")
 	getopt.FlagLong(&opts.SLAPIKey, "apikey", 'k', "API Key of SoftLayer Brand Account")
 	getopt.FlagLong(&opts.FetchAll, "fetchall", 's', "Sync All Tickets")
+	getopt.FlagLong(&opts.From, "from", 'f', "Start date of fetching (YYYY-MM-DD)")
 
 	getopt.Parse()
 	for _, a := range getopt.Args() {

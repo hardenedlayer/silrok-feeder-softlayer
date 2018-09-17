@@ -22,6 +22,7 @@ type TicketPoller struct {
 	User     string
 	APIKey   string
 	FetchAll bool
+	From     string
 }
 
 // Run is...
@@ -44,6 +45,14 @@ func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Mes
 	dateNow := time.Now().Add(-10 * time.Second)
 	if p.FetchAll {
 		dateNow = time.Now().AddDate(-4, 0, 0)
+		if p.From != "" {
+			d, err := time.Parse("2006-01-02", p.From)
+			if err == nil {
+				dateNow = d
+			} else {
+				fmt.Printf("date parsing error: %v\n", err)
+			}
+		}
 	}
 	dateLast := dateNow
 	dateStartStr := dateNow.In(loc).Format("01/02/2006 15:04:05")
