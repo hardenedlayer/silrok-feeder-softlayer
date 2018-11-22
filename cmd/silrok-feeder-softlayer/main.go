@@ -31,7 +31,9 @@ func main() {
 }
 
 func getOptions() *Options {
+	help := false
 	opts := &Options{}
+	getopt.FlagLong(&help, "options", 'o', "Show options")
 	getopt.FlagLong(&opts.ArchiveAddress, "addr", 'a', "Address of Archiver")
 	getopt.FlagLong(&opts.SlackWebhookURL, "hook", 'h', "Webhook URL for Slack")
 	getopt.FlagLong(&opts.SLUser, "user", 'u', "API Username of SoftLayer Brand Account")
@@ -40,12 +42,17 @@ func getOptions() *Options {
 	getopt.FlagLong(&opts.From, "from", 'f', "Start date of fetching (YYYY-MM-DD)")
 
 	getopt.Parse()
+
+	if help {
+		getopt.Usage()
+		return nil
+	}
 	opts.Clients = map[int]string{}
 	for _, a := range getopt.Args() {
 		aa := strings.Split(a, ":")
 		if id, err := strconv.Atoi(aa[0]); err == nil {
 			if len(aa) != 2 {
-				aa = append(aa, strconv.Itoa(id))
+				aa = append(aa, "ant"+strconv.Itoa(id))
 				fmt.Printf("oops! account argument '%s' does not match with 'account_id:channel_name'.\n", a)
 				fmt.Printf("- modified value: %v:%v will be used.\n", id, aa[1])
 			}

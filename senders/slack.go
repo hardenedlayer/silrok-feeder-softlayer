@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	messageRestarted = `@channel *attention please!* silrok feeder for softlayer just (re)started. If this is not planned by you or announced by provider, possibly there was an issue on alerting system. You need to check your services manually.
+	messageRestarted = `@channel *attention please!* silrok feeder for softlayer just (re)started. If this is not planned by you or announced by provider, possibly there was an issue on alerting system. You may need to check your services manually.
 
 _May the force be with you..._`
 )
@@ -43,12 +43,15 @@ func (s *SlackSender) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Messa
 
 	out := make(chan srfsoftlayer.Message)
 	go s.run(in, out)
-	s.send(message{
-		Channel: "#general",
-		Level:   "danger",
-		Title:   "Red two standing by...",
-		Content: messageRestarted,
-	})
+
+	for _, channel := range s.ChannelMap {
+		s.send(message{
+			Channel: channel,
+			Level:   "danger",
+			Title:   "Red two standing by...",
+			Content: messageRestarted,
+		})
+	}
 	return out, nil
 }
 
