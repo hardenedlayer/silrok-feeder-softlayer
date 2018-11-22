@@ -21,7 +21,7 @@ _May the force be with you..._`
 // SlackSender is...
 type SlackSender struct {
 	HookURL      string
-	Channels     []int
+	ChannelMap   map[int]string
 	TitleIgnored []string
 	RefreshedAt  time.Time
 }
@@ -56,8 +56,8 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 	for mess := range in {
 		if mess.Type == "ticket" {
 			accountID := *mess.Content.(datatypes.Ticket).AccountId
-			for _, account := range s.Channels {
-				if accountID != account {
+			for id, channel := range s.ChannelMap {
+				if accountID != id {
 					continue
 				}
 
@@ -87,7 +87,7 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 				}
 
 				err := s.send(message{
-					Channel:   fmt.Sprintf("#ant%v", accountID),
+					Channel:   fmt.Sprintf("#%v", channel),
 					Level:     "warning",
 					Title:     *ticket.Title,
 					TicketID:  *ticket.Id,

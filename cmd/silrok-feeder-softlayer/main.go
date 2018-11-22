@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	getopt "github.com/pborman/getopt/v2"
 )
@@ -16,7 +18,7 @@ type Options struct {
 	From            string
 	ArchiveAddress  string
 	SlackWebhookURL string
-	Clients         []int
+	Clients         map[int]string
 }
 
 func main() {
@@ -38,13 +40,25 @@ func getOptions() *Options {
 	getopt.FlagLong(&opts.From, "from", 'f', "Start date of fetching (YYYY-MM-DD)")
 
 	getopt.Parse()
+	opts.Clients = map[int]string{}
 	for _, a := range getopt.Args() {
-		if c, err := strconv.Atoi(a); err == nil {
-			opts.Clients = append(opts.Clients, c)
+		aa := strings.Split(a, ":")
+		if id, err := strconv.Atoi(aa[0]); err == nil {
+			if len(aa) != 2 {
+				aa = append(aa, strconv.Itoa(id))
+				fmt.Printf("oops! account argument '%s' does not match with 'account_id:channel_name'.\n", a)
+				fmt.Printf("- modified value: %v:%v will be used.\n", id, aa[1])
+			}
+			opts.Clients[id] = aa[1] // channel name
+		} else {
+			fmt.Printf("oops! 'account_id' part of the '%s' is not a number.\n", a)
+			fmt.Printf("use form 'account_id:channel_name'. ignore!\n")
 		}
 	}
 
-	fmt.Println("clients:", opts.Clients)
+	if jc, err := json.Marshal(opts.Clients); err == nil {
+		fmt.Printf("accounts to alert: %v\n", string(jc))
+	}
 
 	return opts
 }

@@ -28,7 +28,7 @@ func run(opts *Options) error {
 	}
 
 	var slackSender srfsoftlayer.Sender
-	slackSender = &senders.SlackSender{HookURL: opts.SlackWebhookURL, Channels: opts.Clients}
+	slackSender = &senders.SlackSender{HookURL: opts.SlackWebhookURL, ChannelMap: opts.Clients}
 	out, err := slackSender.Run(mid)
 	if err != nil {
 		fmt.Printf("could not start slack sender: %v\n", err)
