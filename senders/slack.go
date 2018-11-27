@@ -128,9 +128,9 @@ type message struct {
 func (s *SlackSender) send(mess message) error {
 	hook := slack.NewWebHook(s.HookURL)
 	payload := slack.WebHookPostPayload{
-		Channel:   mess.Channel,
-		Username:  "Hyeoncheon Silrok",
-		IconEmoji: ":hc:",
+		Channel:  mess.Channel,
+		Username: "Hyeoncheon Silrok",
+		IconUrl:  "http://hyeoncheon.github.io/images/hyeoncheon-icon.png",
 	}
 
 	if mess.Timestamp == 0 {
@@ -143,7 +143,7 @@ func (s *SlackSender) send(mess message) error {
 				Pretext:   "_New Ticket Issued!_",
 				Color:     mess.Level,
 				Title:     mess.Title,
-				TitleLink: "http://alargo.as-a-svc.com/tickets/" + strconv.Itoa(mess.TicketID),
+				TitleLink: "https://control.softlayer.com/support/tickets/" + strconv.Itoa(mess.TicketID),
 				Fields: []*slack.AttachmentField{
 					{
 						Title: "Account",
@@ -171,7 +171,7 @@ func (s *SlackSender) send(mess message) error {
 			{
 				Color:     mess.Level,
 				Title:     mess.Title,
-				TitleLink: "http://alargo.as-a-svc.com/",
+				TitleLink: "https://www.cloudz.co.kr/",
 				Fields: []*slack.AttachmentField{
 					{
 						Value: mess.Content,
