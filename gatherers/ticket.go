@@ -1,4 +1,4 @@
-package pollers
+package gatherers
 
 import (
 	"errors"
@@ -17,8 +17,8 @@ const (
 	APIEndpoint = "https://api.softlayer.com/rest/v3.1"
 )
 
-// TicketPoller is ...
-type TicketPoller struct {
+// TicketGatherer is ...
+type TicketGatherer struct {
 	User     string
 	APIKey   string
 	FetchAll bool
@@ -26,7 +26,7 @@ type TicketPoller struct {
 }
 
 // Run is...
-func (p *TicketPoller) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Message, error) {
+func (p *TicketGatherer) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Message, error) {
 	bra, err := p.brandService()
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (p *TicketPoller) Run(in chan srfsoftlayer.Message) (chan srfsoftlayer.Mess
 	return out, nil
 }
 
-func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Message) {
+func (p *TicketGatherer) run(service services.Brand, in, out chan srfsoftlayer.Message) {
 	//! in SL API, all date values should be represented as US/Central. @.@
 	loc, _ := time.LoadLocation("US/Central")
 
@@ -122,7 +122,7 @@ func (p *TicketPoller) run(service services.Brand, in, out chan srfsoftlayer.Mes
 	}
 }
 
-func (p *TicketPoller) brandService() (services.Brand, error) {
+func (p *TicketGatherer) brandService() (services.Brand, error) {
 	sess := session.New(p.User, p.APIKey)
 	sess.Endpoint = "https://api.softlayer.com/rest/v3.1"
 	account := services.GetAccountService(sess)

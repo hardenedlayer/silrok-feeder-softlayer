@@ -4,18 +4,18 @@ import (
 	"fmt"
 
 	"github.com/hardenedlayer/silrok-feeder-softlayer"
-	"github.com/hardenedlayer/silrok-feeder-softlayer/pollers"
+	"github.com/hardenedlayer/silrok-feeder-softlayer/gatherers"
 	"github.com/hardenedlayer/silrok-feeder-softlayer/senders"
 )
 
 func run(opts *Options) error {
 	in := make(chan srfsoftlayer.Message)
 
-	var ticketPoller srfsoftlayer.Poller
-	ticketPoller = &pollers.TicketPoller{User: opts.SLUser, APIKey: opts.SLAPIKey, FetchAll: opts.FetchAll, From: opts.From}
-	mid, err := ticketPoller.Run(in)
+	var ticketGatherer srfsoftlayer.Gatherer
+	ticketGatherer = &gatherers.TicketGatherer{User: opts.SLUser, APIKey: opts.SLAPIKey, FetchAll: opts.FetchAll, From: opts.From}
+	mid, err := ticketGatherer.Run(in)
 	if err != nil {
-		fmt.Printf("could not start ticket poller: %v\n", err)
+		fmt.Printf("could not start ticket gatherer: %v\n", err)
 		return err
 	}
 
