@@ -86,7 +86,7 @@ func (p *TicketGatherer) run(service services.Brand, in, out chan srfsoftlayer.M
 			dateEndStr := dateNow.In(loc).Format("01/02/2006 15:04:05")
 			//! for DateBetween, entiries exactly matched with start and end date also included
 			data, err := service.
-				Mask("attachedVirtualGuests.id;attachedVirtualGuests.hostname;attachedVirtualGuests.domain;attachedVirtualGuests.typeId;attachedVirtualGuests.location.pathString;attachedVirtualGuests.tagReferences;attachedHardware.id;attachedHardware.hostname;attachedHardware.domain;attachedHardware.location.pathString;attachedHardware.tagReferences;id;accountId;assignedUserId;groupId;createDate;lastEditDate;lastEditType;lastResponseDate;locationId;modifyDate;priority;responsibleBrandId;statusId;subjectId;title;firstUpdate.editorType;firstUpdate.editorId;status").
+				Mask("attachedVirtualGuests.id;attachedVirtualGuests.hostname;attachedVirtualGuests.domain;attachedVirtualGuests.typeId;attachedVirtualGuests.location.pathString;attachedVirtualGuests.tagReferences;attachedVirtualGuests.primaryIpAddress;attachedHardware.id;attachedHardware.hostname;attachedHardware.domain;attachedHardware.location.pathString;attachedHardware.tagReferences;attachedHardware.primaryIpAddress;id;accountId;assignedUserId;groupId;createDate;lastEditDate;lastEditType;lastResponseDate;locationId;modifyDate;priority;responsibleBrandId;statusId;subjectId;title;firstUpdate.editorType;firstUpdate.editorId;status").
 				Filter(filter.Build(
 					filter.Path("tickets.createDate").DateBetween(dateStartStr, dateEndStr),
 				)).
@@ -111,7 +111,7 @@ func (p *TicketGatherer) run(service services.Brand, in, out chan srfsoftlayer.M
 						Title:   *ticket.Title,
 						Content: ticket,
 					}
-					fmt.Printf("- ticket #%v create: %v\n", *ticket.Id, ticket.CreateDate.Time)
+					fmt.Printf("- ticket #%v created at %v\n", *ticket.Id, ticket.CreateDate.Time)
 					if ticket.CreateDate.Time.After(dateLast) {
 						dateLast = ticket.CreateDate.Time
 					}

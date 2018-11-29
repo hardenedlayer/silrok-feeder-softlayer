@@ -82,11 +82,25 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 				}
 
 				content := ""
-				if len(ticket.AttachedVirtualGuests) == 1 {
-					content += "Hostname: " + *ticket.AttachedVirtualGuests[0].Hostname
+				if len(ticket.AttachedVirtualGuests) > 0 {
+					content += "*Affected VSIs*\n\n"
+					for _, vm := range ticket.AttachedVirtualGuests {
+						ip := "none"
+						if vm.PrimaryIpAddress != nil {
+							ip = *vm.PrimaryIpAddress
+						}
+						content += fmt.Sprintf("* %v (%v, %v)\n", *vm.Hostname, *vm.Id, ip)
+					}
 				}
-				if len(ticket.AttachedHardware) == 1 {
-					content += "Hostname: " + *ticket.AttachedHardware[0].Hostname
+				if len(ticket.AttachedHardware) > 0 {
+					content += "*Affected BMs*\n\n"
+					for _, bm := range ticket.AttachedHardware {
+						ip := "none"
+						if bm.PrimaryIpAddress != nil {
+							ip = *bm.PrimaryIpAddress
+						}
+						content += fmt.Sprintf("* %v (%v, %v)\n", *bm.Hostname, *bm.Id, ip)
+					}
 				}
 
 				err := s.send(message{
@@ -100,9 +114,9 @@ func (s *SlackSender) run(in, out chan srfsoftlayer.Message) {
 					Content:   content,
 				})
 				if err != nil {
-					fmt.Printf("could not send message for ticket #%v", *ticket.Id)
+					fmt.Printf("could not send message for ticket #%v\n", *ticket.Id)
 				} else {
-					fmt.Printf("slack message for ticket #%v was sent successfully.", *ticket.Id)
+					fmt.Printf("slack message for ticket #%v was sent successfully.\n", *ticket.Id)
 				}
 			}
 		} else {
@@ -140,7 +154,7 @@ func (s *SlackSender) send(mess message) error {
 	if mess.TicketID != 0 {
 		payload.Attachments = []*slack.Attachment{
 			{
-				Pretext:   "_New Ticket Issued!_",
+				Pretext:   fmt.Sprintf("_New Ticket Issued! %v_", mess.TicketID),
 				Color:     mess.Level,
 				Title:     mess.Title,
 				TitleLink: "https://control.softlayer.com/support/tickets/" + strconv.Itoa(mess.TicketID),
